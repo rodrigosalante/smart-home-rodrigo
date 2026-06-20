@@ -606,7 +606,15 @@ async function testTuya() {
   try {
     const r = await fetch(w+'/ping', {signal:AbortSignal.timeout(5000)});
     const j = await r.json();
-    if (j.ok) { dot.className='sdot ok'; txt.textContent='Conectado ✓'; }
+    if (j.ok) {
+      dot.className='sdot ok'; txt.textContent='Conectado ✓';
+      // CORREÇÃO: salva automaticamente assim que o teste passa, não depende de clicar "Salvar" depois
+      tuyaCfg.worker   = w;
+      tuyaCfg.clientId = document.getElementById('t-cid').value.trim();
+      tuyaCfg.secret   = document.getElementById('t-secret').value.trim();
+      localStorage.setItem('sh_tuya', JSON.stringify(tuyaCfg));
+      updateTuyaIndicator();
+    }
     else throw 0;
   } catch(e) { dot.className='sdot err'; txt.textContent='Sem resposta'; }
 }
@@ -623,6 +631,8 @@ function saveTuya() {
   tuyaCfg.clientId = document.getElementById('t-cid').value.trim();
   tuyaCfg.secret   = document.getElementById('t-secret').value.trim();
   localStorage.setItem('sh_tuya', JSON.stringify(tuyaCfg));
+  updateTuyaIndicator();
+  showDebug('✔ Config Tuya salva: '+(tuyaCfg.clientId?tuyaCfg.clientId.substring(0,8)+'...':'(vazio!)'));
   closeTuya();
 }
 
@@ -678,6 +688,22 @@ function loadAll() {
     if (z) zones = JSON.parse(z);
     if (t) tuyaCfg = JSON.parse(t);
   } catch(e) {}
+  updateTuyaIndicator();
+}
+
+// Indicador visual no botão do cabeçalho: mostra se a config Tuya está realmente salva
+function updateTuyaIndicator() {
+  const btn = document.querySelector('.hbtn.green');
+  if (!btn) return;
+  if (tuyaCfg.worker && tuyaCfg.clientId && tuyaCfg.secret) {
+    btn.textContent = '✔ TUYA OK';
+    btn.style.borderColor = '#26d98b';
+    btn.style.color = '#26d98b';
+  } else {
+    btn.textContent = '⚠ TUYA';
+    btn.style.borderColor = '#ff4d6d';
+    btn.style.color = '#ff4d6d';
+  }
 }
 
 // ═══════════════ CLOCK ═══════════════
